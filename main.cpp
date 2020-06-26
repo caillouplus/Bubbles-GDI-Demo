@@ -33,28 +33,41 @@ int wWinMain(HINSTANCE main_instance, HINSTANCE, wchar_t*, int show_args) {
 }
 
 long long MainWindowProc(HWND hwnd, unsigned int msg, unsigned long long wparam, long long lparam) {
+  static bool keypressing;
   switch (msg) {
     case WM_CREATE: {
-      main_canvas = new Canvas(WINDOW_SIZE_X, WINDOW_SIZE_Y, GETCOLOR());
-      REPEAT(i, BUBBLE_COUNT) {
-        Bubble* bubble = new Bubble(MYRANDOM <double> (RADIUS_MIN, RADIUS_MAX), MYRANDOM <double> (0.0, (double)WINDOW_SIZE_X), MYRANDOM <double> (0.0, (double)WINDOW_SIZE_Y), MYRANDOM <double> (- SPEED_MAX, SPEED_MAX), MYRANDOM <double> (- SPEED_MAX, SPEED_MAX), GETCOLOR(), GETCOLOR());
-        if (main_canvas->AddBubble(*bubble)) continue;
-        else {
-          delete bubble;
-          --i;
-        }
-      }
-      SetTimer(hwnd, 0, 15, nullptr);
+      main_canvas = new Canvas(WINDOW_SIZE_X, WINDOW_SIZE_Y, GETCOLOR(), BUBBLE_COUNT);
+      main_canvas->PreDraw(GetDC(hwnd));
+      SetTimer(hwnd, 0, 1, nullptr);
     } return 0;
     case WM_PAINT: {
       PAINTSTRUCT ps;
+      //HDC hdc = GetDC(nullptr);
       HDC hdc = BeginPaint(hwnd, &ps);
-      main_canvas->PaintEverything(hdc);
+      HDC memory = CreateCompatibleDC(hdc);
+      HBITMAP bitmap = CreateCompatibleBitmap(hdc, WINDOW_SIZE_X, WINDOW_SIZE_Y);
+      SelectObject(memory, bitmap);
+      main_canvas->PaintEverything(memory);
+      SelectObject(hdc, memory);
+      BitBlt(hdc, 0, 0, WINDOW_SIZE_X, WINDOW_SIZE_Y, memory, 0, 0, SRCCOPY);
+
+      //ReleaseDC(nullptr, hdc);
+      //ValidateRect(hwnd, nullptr);
       EndPaint(hwnd, &ps);
     } return 0;
     case WM_TIMER: {
-      main_canvas->AdvanceTime(1.0);
-      InvalidateRect(hwnd, nullptr, FALSE);
+      if (keypressing) {
+        main_canvas->AdvanceTime(1.0);
+        InvalidateRect(hwnd, nullptr, FALSE);
+      }
+    } return 0;
+    case WM_KEYDOWN: {
+      keypressing = true;
+//      main_canvas->AdvanceTime(1.0);
+//      InvalidateRect(hwnd, nullptr, FALSE);
+    } return 0;
+    case WM_KEYUP: {
+//      keypressing = false;
     } return 0;
     case WM_CLOSE: {
       DestroyWindow(hwnd);

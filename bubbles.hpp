@@ -2,6 +2,7 @@
 #include "pch.hpp"
 #include "macros.hpp"
 #include "config.hpp"
+#include "trigonometry.hpp"
 
 class Canvas;
 class Bubble;
@@ -12,13 +13,15 @@ class Canvas {
 
   HBRUSH const background;
 
-  std::vector <Bubble*> bubbles;
+  Bubble** bubbles;
+  Bubble** bubbles_end;
 
   enum class CanvasSide : unsigned {Top = 0B0U, Bottom = 0B1U, Left = 0B10U, Right = 0B11U, None = 0B100U};
 
 public:
-  Canvas(unsigned, unsigned, unsigned long);
-  bool AddBubble(Bubble&);
+  Canvas(unsigned, unsigned, unsigned long, unsigned);
+  void AddBubble(unsigned count);
+  void PreDraw(HDC);
   bool CheckCanvasOutOfBounds(Bubble const&) const;
   bool CheckSpecificSideOutOfBounds(Bubble const&, CanvasSide) const;
   bool CheckSpecificSideOutOfBoundsNext(Bubble const&, CanvasSide) const;
@@ -28,10 +31,10 @@ public:
   double WhenWillBubbleReachWall(Bubble const&, CanvasSide) const;
 //  double WhenWillTwoBubblesShock(Bubble const& bubble_a, Bubble const& bubble_b) const;
 
-  void HandleBubbleWallShock(Bubble&, double);
-  void HandleTwoBubblesShock(Bubble&, Bubble&, double);
+  void HandleBubbleWallShock(Bubble&, double) const;
+  void HandleTwoBubblesShock(Bubble&, Bubble&, double) const;
 
-  void AdvanceTime(double);
+  void AdvanceTime(double) const;
   void PaintEverything(HDC) const;
 };
 
@@ -42,11 +45,7 @@ class Bubble {
   double speed_x;
   double speed_y;
 
-  bool invert_x = false;
-  bool invert_y = false;
-
-  HPEN const outline;
-  HBRUSH const fill;
+  HDC drawing;
 
   struct {
     double pos_x;
@@ -59,7 +58,9 @@ class Bubble {
   friend class Canvas;
 
 public:
-  Bubble(double, double, double, double, double, unsigned long, unsigned long);
+  Bubble(double, double, double, double, double);
+  void PreDraw(unsigned, unsigned, HDC);
+  ~Bubble();
   void SetPreNextPos(double);
   bool ConflictSetAndRet();
   void NoConflictAdvance();

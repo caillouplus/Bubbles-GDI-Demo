@@ -1,8 +1,10 @@
 #pragma once
 #define WIN32_LEAN_AND_MEAN
+#define _USE_MATH_DEFINES
 #include <Windows.h>
 #include <vector>
 #include <algorithm>
 #include <sstream>
 #include <random>
 #include <cmath>
+#include <utility>
